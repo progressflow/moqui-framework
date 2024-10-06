@@ -788,6 +788,7 @@ along with this software (see the LICENSE.md file). If not, see
         </actions>
     </service>
 
+    <!-- Postgres Services -->
     <service verb="check" noun="DatabasePostgres">
         <implements service="org.moqui.impl.InstanceServices.check#Database"/>
         <actions>
@@ -826,7 +827,6 @@ along with this software (see the LICENSE.md file). If not, see
             ]]></script>
         </actions>
     </service>
-
     <service verb="create" noun="DatabasePostgres">
         <implements service="org.moqui.impl.InstanceServices.create#Database"/>
         <actions>
