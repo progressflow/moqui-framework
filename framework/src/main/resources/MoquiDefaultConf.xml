@@ -640,6 +640,7 @@
                 default-start-server-args="-tcpPort 9092 -ifExists -baseDir ${moqui_runtime}/db/h2">
             <!-- 'VALUE' is a reserved word in H2 starting with version 2.0.202 -->
             <name-replace original="VALUE" replace="THE_VALUE"/>
+            <name-replace original="KEY" replace="THE_KEY"/>
             <inline-jdbc><xa-properties url="${entity_ds_url}" user="${entity_ds_user}" password="${entity_ds_password}"/></inline-jdbc>
         </database>
         <!-- TODO: add configuration examples -->
