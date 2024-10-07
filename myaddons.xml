@@ -1,0 +1,26 @@
+<addons default-repository="github">
+
+    <!-- Moqui runtime -->
+    <runtime name="moqui-runtime" group="progressflow" version="" branch="master"/>
+
+    <!-- Moqui components -->
+    <component name="moqui-aws" group="progressflow" version="" branch="master"/>
+    <component name="moqui-fop" group="progressflow" version="" branch="master"/>
+    <component name="moqui-poi" group="progressflow" version="" branch="master"/>
+    <component name="moqui-sftp" group="progressflow" version="" branch="master"/>
+    <component name="mantle-udm" group="progressflow" version="" branch="master"/>
+    <component name="mantle-usl" group="progressflow" version="" branch="master"/>
+    <component name="moqui-sso" group="progressflow" version="" branch="master"/>
+    <component name="SimpleScreens" group="progressflow" version="" branch="master"/>
+    <component name="MarbleERP" group="progressflow" version="" branch="master"/>
+
+    <!-- Progressflow components -->
+    <component name="commons-lib" group="progressflow" version="" branch="master"/>
+    <component name="progressflow-api" group="progressflow" version="" branch="master"/>
+    <component name="hauler-api" group="progressflow" version="" branch="master"/>
+
+    <!-- Component sets -->
+    <component-set name="progressflow-framework" components="moqui-aws,moqui-fop,moqui-poi,moqui-sftp,mantle-udm,mantle-usl,SimpleScreens,MarbleERP,moqui-sso"/>
+    <component-set name="progressflow-developer" sets="progressflow-framework" components="commons-lib,progressflow-api,hauler-api"/>
+
+</addons>
