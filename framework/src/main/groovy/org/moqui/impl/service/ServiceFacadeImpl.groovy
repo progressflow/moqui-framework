@@ -296,6 +296,29 @@ class ServiceFacadeImpl implements ServiceFacade {
             // NOTE: don't quit on finding first, allow later components to override earlier: if (serviceNode != null) break
         }
 
+        // search for the service def XML file in the database
+        for (ResourceReference projectResourceRef in this.ecfi.resourceFacade.getLocationReference("dbresource://Workbench").getDirectoryEntries()) {
+            serviceComponentRr = projectResourceRef.findChildDirectory(servicePathLocation)
+            if (serviceComponentRr.supportsExists()) {
+                if (serviceComponentRr.exists) {
+                    MNode tempNode = findServiceNode(serviceComponentRr, verb, noun)
+                    if (tempNode != null) {
+                        if (foundRr != null) logger.info("Found service ${verb}#${noun} at ${serviceComponentRr.location} which overrides service at ${foundRr.location}")
+                        serviceNode = tempNode
+                        foundRr = serviceComponentRr
+                    }
+                }
+            } else {
+                // only way to see if it is a valid location is to try opening the stream, so no extra conditions here
+                MNode tempNode = findServiceNode(serviceComponentRr, verb, noun)
+                if (tempNode != null) {
+                    if (foundRr != null) logger.info("Found service ${verb}#${noun} at ${serviceComponentRr.location} which overrides service at ${foundRr.location}")
+                    serviceNode = tempNode
+                    foundRr = serviceComponentRr
+                }
+            }
+        }
+
         if (serviceNode == null) logger.warn("Service ${path}.${verb}#${noun} not found; used relative location [${servicePathLocation}]")
 
         return serviceNode
@@ -346,6 +369,14 @@ class ServiceFacadeImpl implements ServiceFacade {
         for (String location in this.ecfi.getComponentBaseLocations().values()) {
             //String location = "component://${componentName}/service"
             ResourceReference serviceRr = this.ecfi.resourceFacade.getLocationReference(location + "/service")
+            if (serviceRr.supportsExists() && serviceRr.exists && serviceRr.supportsDirectory()) {
+                findServicesInDir(serviceRr.location, serviceRr, sns)
+            }
+        }
+
+        // search for service def XML files in the database
+        for (ResourceReference projectResourceRef in this.ecfi.resourceFacade.getLocationReference("dbresource://Workbench").getDirectoryEntries()) {
+            ResourceReference serviceRr = projectResourceRef.findChildDirectory("service")
             if (serviceRr.supportsExists() && serviceRr.exists && serviceRr.supportsDirectory()) {
                 findServicesInDir(serviceRr.location, serviceRr, sns)
             }
