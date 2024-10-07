@@ -100,11 +100,17 @@ public class MoquiStart {
             System.out.println("    no-run-es ------------------- Don't Try starting and stopping ElasticSearch in runtime/elasticsearch");
             System.out.println("    If no -types or -location argument is used all known data files of all types will be loaded.");
             System.out.println("[default] ---- Run embedded Jetty server");
-            System.out.println("    port=<port> ---------------- The http listening port. Default is 8080");
-            System.out.println("    threads=<max threads> ------ Maximum number of threads. Default is 100");
-            System.out.println("    conf=<moqui.conf> ---------- The Moqui Conf XML file to use, overrides other ways of specifying it");
+            System.out.println("    port=<port> ----------------- The http listening port. Default is 8080");
+            System.out.println("    threads=<max threads> ------- Maximum number of threads. Default is 100");
+            System.out.println("    conf=<moqui.conf> ----------- The Moqui Conf XML file to use, overrides other ways of specifying it");
             System.out.println("    no-run-es ------------------- Don't Try starting and stopping OpenSearch in runtime/opensearch or ElasticSearch in runtime/elasticsearch");
-            System.out.println("");
+            System.out.println("    https-port=<port> ----------- The https listening port, only enabled if key and trust store arguments are specified. Default is 8443");
+            System.out.println("    key-store-path=<path> ------- Path to key store");
+            System.out.println("    key-store-password=<pass> --- Password used to access key store");
+            System.out.println("    trust-store-path=<path> ----- Path to trust store");
+            System.out.println("    trust-store-password=<pass> - Password used to access trust store");
+            System.out.println("    trust-all ------------------- Trust all certificates blindly");
+            System.out.println();
             System.exit(0);
         }
 
@@ -187,6 +193,11 @@ public class MoquiStart {
             int port = 8080;
             String portStr = argMap.get("port");
             if (portStr != null && portStr.length() > 0) port = Integer.parseInt(portStr);
+
+            int httpsPort = 8443;
+            String httpPortStr = argMap.get("https-port");
+            if (httpPortStr != null && httpPortStr.length() > 0) httpsPort = Integer.parseInt(httpPortStr);
+
             int threads = 100;
             String threadsStr = argMap.get("threads");
             if (threadsStr != null && threadsStr.length() > 0) threads = Integer.parseInt(threadsStr);
@@ -216,6 +227,9 @@ public class MoquiStart {
             Class<?> connectionFactoryClass = moquiStartLoader.loadClass("org.eclipse.jetty.server.ConnectionFactory");
             Class<?> connectionFactoryArrayClass = Array.newInstance(connectionFactoryClass, 1).getClass();
             Class<?> httpConnectionFactoryClass = moquiStartLoader.loadClass("org.eclipse.jetty.server.HttpConnectionFactory");
+            Class<?> sslConnectionFactoryClass = moquiStartLoader.loadClass("org.eclipse.jetty.server.SslConnectionFactory");
+            Class<?> sslContextFactoryServerClass = moquiStartLoader.loadClass("org.eclipse.jetty.util.ssl.SslContextFactory$Server");
+            Class<?> secureRequestCustomizerClass = moquiStartLoader.loadClass("org.eclipse.jetty.server.SecureRequestCustomizer");
 
             Class<?> scHandlerClass = moquiStartLoader.loadClass("org.eclipse.jetty.servlet.ServletContextHandler");
             Class<?> wsInitializerClass = moquiStartLoader.loadClass("org.eclipse.jetty.websocket.javax.server.config.JavaxWebSocketServletContainerInitializer");
@@ -243,6 +257,42 @@ public class MoquiStart {
             serverConnectorClass.getMethod("setPort", int.class).invoke(httpConnector, port);
 
             serverClass.getMethod("addConnector", connectorClass).invoke(server, httpConnector);
+
+            // https connector
+            String keyStorePath = argMap.get("key-store-path");
+            String keyStorePassword = argMap.get("key-store-password");
+            String trustStorePath = argMap.get("trust-store-path");
+            String trustStorePassword = argMap.get("trust-store-password");
+            if (keyStorePath != null && keyStorePassword != null && ((trustStorePath != null && trustStorePassword != null) || argMap.containsKey("trust-all"))) {
+                Object secureRequestCustomizer = secureRequestCustomizerClass.getConstructor(boolean.class).newInstance(false);
+
+                Object httpsConfig = httpConfigurationClass.getConstructor().newInstance();
+                httpConfigurationClass.getMethod("setSecureScheme", String.class).invoke(httpsConfig, "https");
+                httpConfigurationClass.getMethod("setSecurePort", int.class).invoke(httpsConfig, httpsPort);
+                httpConfigurationClass.getMethod("addCustomizer", customizerClass).invoke(httpsConfig, secureRequestCustomizer);
+                httpConfigurationClass.getMethod("addCustomizer", customizerClass).invoke(httpsConfig, forwardedRequestCustomizer);
+
+                Object sslContextFactoryServer = sslContextFactoryServerClass.getConstructor().newInstance();
+                sslContextFactoryServerClass.getMethod("setKeyStorePath", String.class).invoke(sslContextFactoryServer, keyStorePath);
+                sslContextFactoryServerClass.getMethod("setKeyStorePassword", String.class).invoke(sslContextFactoryServer, keyStorePassword);
+                if (argMap.containsKey("trust-all")) {
+                    sslContextFactoryServerClass.getMethod("setTrustAll", boolean.class).invoke(sslContextFactoryServer, true);
+                } else {
+                    sslContextFactoryServerClass.getMethod("setTrustStorePath", String.class).invoke(sslContextFactoryServer, trustStorePath);
+                    sslContextFactoryServerClass.getMethod("setTrustStorePassword", String.class).invoke(sslContextFactoryServer, trustStorePassword);
+                }
+
+                Object sslConnectionFactory = sslConnectionFactoryClass.getConstructor(sslContextFactoryServerClass, String.class).newInstance(sslContextFactoryServer, "HTTP/1.1");
+                Object httpsConnectionFactory = httpConnectionFactoryClass.getConstructor(httpConfigurationClass).newInstance(httpsConfig);
+                Object httpsConnectionFactoryArray = Array.newInstance(connectionFactoryClass, 2);
+                Array.set(httpsConnectionFactoryArray, 0, sslConnectionFactory);
+                Array.set(httpsConnectionFactoryArray, 1, httpsConnectionFactory);
+
+                Object httpsConnector = serverConnectorClass.getConstructor(serverClass, connectionFactoryArrayClass).newInstance(server, httpsConnectionFactoryArray);
+                serverConnectorClass.getMethod("setPort", int.class).invoke(httpsConnector, httpsPort);
+
+                serverClass.getMethod("addConnector", connectorClass).invoke(server, httpsConnector);
+            }
 
             // SessionDataStore
             File storeDir = new File(runtimePath + "/sessions");
