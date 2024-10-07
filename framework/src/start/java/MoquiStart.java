@@ -62,6 +62,11 @@ public class MoquiStart {
             }
         }
 
+        // create a safe copy of the argument map
+        Map<String, String> safeArgMap = new LinkedHashMap<>(argMap);
+        safeArgMap.replace("key-store-password", "******");
+        safeArgMap.replace("trust-store-password", "******");
+
         if (firstArg.endsWith("help") || "-?".equals(firstArg)) {
             // setup the class loader
             StartClassLoader moquiStartLoader = new StartClassLoader(true);
@@ -202,7 +207,7 @@ public class MoquiStart {
             String threadsStr = argMap.get("threads");
             if (threadsStr != null && threadsStr.length() > 0) threads = Integer.parseInt(threadsStr);
 
-            System.out.println("Running Jetty server on port " + port + " max threads " + threads + " with args [" + argMap + "]");
+            System.out.println("Running Jetty server on port " + port + " max threads " + threads + " with args [" + safeArgMap + "]");
 
             Class<?> serverClass = moquiStartLoader.loadClass("org.eclipse.jetty.server.Server");
             Class<?> handlerClass = moquiStartLoader.loadClass("org.eclipse.jetty.server.Handler");
@@ -472,7 +477,7 @@ public class MoquiStart {
 
             */
         } catch (Exception e) {
-            System.out.println("Error loading or running Jetty embedded server with args [" + argMap + "]: " + e.toString());
+            System.out.println("Error loading or running Jetty embedded server with args [" + safeArgMap + "]: " + e.toString());
             e.printStackTrace();
         }
 
