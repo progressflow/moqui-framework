@@ -857,8 +857,15 @@
             <database-type type="binary-very-long" sql-type="BYTEA"/>
 
             <!-- default max connections for PostgreSQL is 100 -->
-            <inline-jdbc pool-maxsize="90"><xa-properties serverName="${entity_ds_host}" portNumber="${entity_ds_port?:'5432'}"
-                    databaseName="${entity_ds_database}" user="${entity_ds_user}" password="${entity_ds_password}"/></inline-jdbc>
+            <inline-jdbc pool-maxsize="90">
+                <xa-properties
+                        url="${entity_ds_url.startsWith('jdbc:postgresql') ? entity_ds_url : null}"
+                        serverName="${entity_ds_url.startsWith('jdbc:postgresql') ? null : entity_ds_host}"
+                        portNumber="${entity_ds_url.startsWith('jdbc:postgresql') ? null : entity_ds_port}"
+                        databaseName="${entity_ds_url.startsWith('jdbc:postgresql') ? null : entity_ds_database}"
+                        user="${entity_ds_user}"
+                        password="${entity_ds_password}"/>
+            </inline-jdbc>
         </database>
     </database-list>
 
