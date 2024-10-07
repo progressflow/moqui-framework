@@ -1056,7 +1056,7 @@ task getDepends {
 }
 
 task getComponentSet {
-    description "Gets all components in the specied componentSet using specified location type, also check/get all components it depends on; requires -Pcomponent property; -PlocationType property optional (defaults to git if there is a .git directory, otherwise to current)"
+    description "Gets all components in the specified componentSet using specified location type, also check/get all components it depends on; requires -Pcomponent property; -PlocationType property optional (defaults to git if there is a .git directory, otherwise to current)"
     doLast {
         String curLocationType = file('.git').exists() ? 'git' : 'current'
         if (project.hasProperty('locationType')) curLocationType = locationType
