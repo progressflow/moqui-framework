@@ -1,4 +1,4 @@
-<addons default-repository="github">
+<addons default-repository="github-ssh">
 
     <!-- Moqui runtime -->
     <runtime name="moqui-runtime" group="progressflow" version="" branch="master"/>
