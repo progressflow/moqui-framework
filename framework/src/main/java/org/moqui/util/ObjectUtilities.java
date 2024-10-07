@@ -134,6 +134,10 @@ public class ObjectUtilities {
             if (theClass == Date.class && value instanceof Timestamp) {
                 // Groovy doesn't handle this one, but easy conversion
                 return new Date(((Timestamp) value).getTime());
+            } else if (theClass == Date.class && value instanceof Long) {
+                return new Date((Long) value);
+            } else if (theClass == Timestamp.class && value instanceof Long) {
+                return new Timestamp((Long) value);
             } else {
                 // let groovy do the work
                 // logger.warn("Converted " + value + " of type " + origClass.getName() + " to " + DefaultGroovyMethods.asType(value, theClass) + " for class " + theClass.getName());
